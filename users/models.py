@@ -1,6 +1,5 @@
 from django.db import models
 from common.models import BaseModel
-from django.conf import settings
 from utils.fileManger import change_filename
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -55,7 +54,3 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
-
-class Notice(BaseModel):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    content = models.TextField()
