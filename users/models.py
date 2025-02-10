@@ -1,6 +1,7 @@
 from django.db import models
-from common.models import BaseModel
-from utils.fileManger import change_filename
+from common.models.baseModels import BaseModel
+from common.models.choiceModels import ClientPositionChoices
+from common.utils.fileManger import change_filename
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
@@ -23,10 +24,6 @@ class UserManager(BaseUserManager):
         
         superuser.save(using=self._db)
         return superuser
-
-class ClientPositionChoices(models.TextChoices):
-    INVESTOR = 'INV', '투자자'
-    ENTREPRENEUR = 'ENT', '창업자'
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, unique=True)
@@ -51,12 +48,12 @@ def certificate_upload_path(instance, filename):
     return f'certificate-employment/{change_filename(filename)}'
 
 class Client(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='clients')
     image = models.ImageField(upload_to=profile_upload_path, blank=True)
     company = models.CharField(max_length=50)
     company_position = models.CharField(max_length=10)
     company_email = models.EmailField(max_length=50)
-    certificate_employment = models.FileField(upload_to=certificate_upload_path, blank=True)
+    certificate_employment = models.FileField(upload_to=certificate_upload_path)
     is_in_company = models.BooleanField(default=False)
     user_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
     is_agree = models.BooleanField(default=False)
@@ -73,7 +70,7 @@ class Client(models.Model):
         return self.user.phone
 
 class Manager(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='manager')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='managers')
     job = models.CharField(max_length=10)
     hire_date = models.DateField()
 
@@ -84,3 +81,7 @@ class Manager(models.Model):
     @property
     def phone(self):
         return self.user.phone
+    
+class Notice(BaseModel):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='notices')
+    content = models.TextField()
