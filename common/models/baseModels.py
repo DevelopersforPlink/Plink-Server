@@ -1,13 +1,15 @@
 import ulid
 from django.db import models
-from common.models.baseModels import BaseModel
 from .choiceModels import RequestStatus
+
+def generate_ulid():
+    return str(ulid.ULID())
 
 class BaseModel(models.Model):
     id = models.CharField(
         max_length=26,
         primary_key=True,
-        default=lambda: str(ulid.ULID()),
+        default=generate_ulid,
         editable=False
     )
     created_at = models.DateTimeField(auto_now_add=True)
