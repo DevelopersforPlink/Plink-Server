@@ -6,12 +6,12 @@ from summits.models import Summit
 
 class PTRequest(BaseRequest):
     pt = models.ForeignKey(PT, on_delete=models.CASCADE, related_name='pt_requests')
-    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='pt_requests')
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='pt_requests', null=True, blank=True)
 
 class SummitRequest(BaseRequest):
     summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='summit_requests')
-    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='summit_requests')
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='summit_requests', null=True, blank=True)
 
 class ClientRequest(BaseRequest):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client_requests')
-    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests')
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests', null=True, blank=True)
