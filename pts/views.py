@@ -163,3 +163,42 @@ class PTAPIView(APIView):
         
         presentation.delete()
         return Response({"message": "등록한 프레젠테이션이 삭제되었어요."}, status=status.HTTP_200_OK)
+
+class PTDetailAPIView(APIView):
+    permission_classes =[IsAuthenticated]
+
+    def get(self, request, pk):
+        presentation = get_object_or_404(PT, pk=pk)
+        serializer = PTDetailSerializer(presentation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class PostedPTPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class PostedPTListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = PostedPTPagination
+
+    def get(self, request):
+        user = self.request.user
+
+        try:
+            client = user.clients
+        except Client.DoesNotExist:
+            raise PermissionDenied({
+                "error": "권한이 없습니다.",
+                "message": "창업가로 등록된 사용자만 접근할 수 있습니다."
+            })
+
+        posted_pts = PT.objects.filter(client=client).order_by('-created_at')
+
+        paginator = self.pagination_class()
+        paginated_pts = paginator.paginate_queryset(posted_pts, request)
+
+        serializer = PostedPTSerializer(paginated_pts, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
