@@ -30,6 +30,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_agree = models.BooleanField(default=False)
+    is_code_verificated = models.BooleanField(default=True) # 아이디 조회나 비밀번호 변경 요청할 때 인증코드 통과해야 가능하도록
 
     objects = UserManager()
 
