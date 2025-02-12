@@ -6,4 +6,6 @@ app_name = 'pts'
 
 urlpatterns = [
     path('investors/main/', InvestorMainAPIView.as_view()),
+    path('presentations/', PTCreateAPIView.as_view()),
+    path('presentations/<str:pk>/', PTAPIView.as_view()),
 ]

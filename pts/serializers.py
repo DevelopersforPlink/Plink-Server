@@ -25,3 +25,13 @@ class PTSerializer(serializers.ModelSerializer):
 
     def get_business_type_display(self, obj):
         return obj.get_business_type_display()
+
+class PTCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PT
+        fields = [
+            "thumbnail", "service_name", "title",
+            "link", "total_link", "business_type", "summary",
+            "summary_business_plan", "business_plan", "pitch_deck",
+            "traction_data", "business_progress", "is_summit"
+        ]

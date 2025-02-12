@@ -6,7 +6,7 @@ from summits.models import Summit
 
 class PT(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='pts')
-    summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pts')
+    summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pts', null=True, blank=True)
     service_name = models.CharField(max_length=30)
     title = models.CharField(max_length=30)
     thumbnail = models.ImageField(upload_to='')
