@@ -27,11 +27,9 @@ class UserManager(BaseUserManager):
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=10)
-    phone = models.CharField(max_length=15)
-    email = models.EmailField(max_length=50)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    is_agree = models.BooleanField(default=False)
 
     objects = UserManager()
 
@@ -49,6 +47,8 @@ def certificate_upload_path(instance, filename):
 
 class Client(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='clients')
+    name = models.CharField(max_length=10)
+    phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)
     company = models.CharField(max_length=50)
     company_position = models.CharField(max_length=10)
@@ -56,31 +56,17 @@ class Client(models.Model):
     certificate_employment = models.FileField(upload_to=certificate_upload_path)
     is_in_company = models.BooleanField(default=False)
     user_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
-    is_agree = models.BooleanField(default=False)
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
     verification_code = models.CharField(max_length=6, blank=True)
 
-    @property
-    def name(self):
-        return self.user.name
-
-    @property
-    def phone(self):
-        return self.user.phone
-
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='managers')
+    name = models.CharField(max_length=10)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField(max_length=50)
     job = models.CharField(max_length=10)
     hire_date = models.DateField()
-
-    @property
-    def name(self):
-        return self.user.name
-
-    @property
-    def phone(self):
-        return self.user.phone
     
 class Notice(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='notices')
