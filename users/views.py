@@ -1,7 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 
 from rest_framework.views import APIView
-from .serializers import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
@@ -10,9 +9,16 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.core.mail import EmailMessage
+
 
 from django.contrib.auth import authenticate
 # from django.contrib.auth.models import update_last_login
+
+from .models import *
+from .serializers import *
+
+from common.utils.verificationCodeManager import create_code
 
 
 class RefreshAPIView(APIView):
@@ -44,7 +50,7 @@ class JoinAPIView(APIView):
             return res
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class IdCheckAPIView(APIView):
+class CheckIdAPIView(APIView):
     permission_classes = [AllowAny]
     # 아이디 중복 체크
     def get(self, request):
@@ -72,10 +78,11 @@ class LoginAPIView(APIView):
         except TokenError as e:
             pass
         
-        if authenticate(username=username, password=password):
+        if user := authenticate(username=username, password=password):
             serializer = TokenObtainPairSerializer(data={'username': username, 'password': password})
             # id, 비번 맞나 틀리나 검사
             if serializer.is_valid():
+                user.is_code_verificated = True
                 res = Response(
                     {
                         "message": "login success",
@@ -90,3 +97,70 @@ class LoginAPIView(APIView):
                 return Response(serializer.errors)
         else: # id, 비번 둘 중 하나가 틀렸을 때
             return Response({"message": "아이디 혹은 비밀번호가 맞지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+class VerificationCodeAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    # 인증코드 발송
+    def post(self, request):
+        serializer = CodeAuthSerializr(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            # client = get_object_or_404(Client, company_email=email)
+            code = create_code()
+            # client.verification_code = code
+            # client.save()
+            subject = "Plink 이메일 인증 보안코드입니다."
+            message = "보안코드는 "+ code + " 입니다."
+            to = [email]
+            EmailMessage(subject=subject, body=message, to=to).send()
+            return Response({"message": "send code success"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request): # 보안코드 비교 및 임시토큰 발행
+        email = request.data.get('email')
+        code = request.data.get('code')
+        if email == None or code == None:
+            return Response({"message": "no email or code"}, status=status.HTTP_400_BAD_REQUEST)
+        client = get_object_or_404(Client, company_email=email)
+        verification_code = client.verification_code
+        client.verification_code = None
+        client.save()
+        if code == verification_code:
+            client.user.is_code_verificated = True
+            access = RefreshToken.for_user(client.user).access_token
+            res = Response(
+                {
+                    "message": "code is correct",
+                    "temporary_access": access
+                },
+                status=status.HTTP_200_OK,
+            )
+            return res
+        return Response(
+            {
+                "message": "코드가 맞지 않습니다. 재전송 후 새로운 코드를 입력해주세요."
+            }, 
+            status=status.HTTP_400_BAD_REQUEST
+            )
+
+class FindIdAPIView(APIView):
+    # 아이디 조회
+    def get(self, request):
+        user = request.user
+        if user:
+            return Response({"username": user.username}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Not user"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ResetPwAPIView(APIView):
+    # pw 변경
+    def patch(self, request):
+        user = request.user
+        password = request.data.get("password", None)
+        if password == None:
+            return Response({"message": "No password"}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(password)
+        user.save()
+        return Response({"message": "password changed."}, status=status.HTTP_202_ACCEPTED)

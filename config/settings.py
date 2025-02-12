@@ -203,6 +203,14 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = local_settings.EMAIL_HOST
+EMAIL_USE_TLS = True
+EMAIL_PORT = local_settings.EMAIL_PORT
+EMAIL_HOST_USER = local_settings.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = local_settings.EMAIL_HOST_PASSWORD
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 ## 세션 만료 관리
 # 브라우저 닫으면 삭제 (default False)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
