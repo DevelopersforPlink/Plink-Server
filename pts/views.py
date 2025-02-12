@@ -15,6 +15,16 @@ class InvestorMainPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+    def get_paginated_response(self, data):
+        return Response({
+            "category": self.request.query_params.get("category", "ALL"),
+            "page": self.page.number,
+            "page_size": self.page.paginator.per_page,
+            "total_pages": self.page.paginator.num_pages,
+            "total_items": self.page.paginator.count,
+            "projects": data
+        })
+
 class InvestorMainAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PTSerializer
@@ -67,3 +77,14 @@ class InvestorMainAPIView(ListAPIView):
             queryset = queryset.filter(business_type=category)
 
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
