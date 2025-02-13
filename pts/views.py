@@ -10,6 +10,7 @@ from common.models.choiceModels import ClientPositionChoices
 from manages.models import PTRequest
 from .models import *
 from .serializers import *
+from users.permissions import IsApprovedUser, IsEntrepreneur, IsInvestor
 
 class InvestorMainPagination(PageNumberPagination):
     page_size = 12
