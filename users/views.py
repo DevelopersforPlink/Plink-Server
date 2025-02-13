@@ -20,6 +20,7 @@ from django.contrib.auth import authenticate
 from .models import *
 from manages.models import ClientRequest
 from .serializers import *
+from manages.serializers import ClientRequestSerializer
 
 from common.utils.verificationCodeManager import create_code
 
@@ -178,10 +179,10 @@ class ResetPwAPIView(APIView):
 
 class ClientInfoAPIView(APIView):
     def get(self, request):
-        client = request.user.client
+        client = getattr(request.user, 'client', None)
         serializer = ClientSerializer(client)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+        
     def post(self, request):
         data = request.data
         user = request.user
@@ -191,15 +192,36 @@ class ClientInfoAPIView(APIView):
             client = serializer.save()
             client.user.is_agree = True
             client.user.save()
-            ClientRequest.objects.create(client=client)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            data.pop('user')
+            data['client'] = client.id
+            serializer_request = ClientRequestSerializer(data=data)
+            if serializer.is_valid():
+                serializer_request.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer_request.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def patch(self, request):
-        client = request.user.client
-        serializer = ClientSerializer(client, data=request.data, partial=True)
+        client_request = request.user.client.client_request
+        data = request.data
+        serializer = ClientRequestSerializer(client_request, data=data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            ClientRequest.objects.create(client=client)
+            client_request = serializer.save()
+            client_request.is_approve = False
+            client_request.save()
+            if client := client_request.client:
+                client.is_approve = False
+                client.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ClientUpdateInfoAPIView(APIView):
+    def get(self, request):
+        if request.user.is_approve:
+            client = request.user.client
+            serializer = ClientSerializer(client)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            client_request = request.user.client_request
+            serializer = ClientRequestSerializer(client_request)
+            return Response(serializer.data, status=status.HTTP_200_OK)

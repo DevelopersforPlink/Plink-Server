@@ -33,7 +33,7 @@ class PTRequest(BaseRequest):
 
 class SummitRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='summit_requests', null=True, blank=True)
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summits')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summits_requests')
     thumbnail = models.ImageField(upload_to='')
     title = models.CharField(max_length=30)
     start_date = models.DateTimeField()
@@ -64,7 +64,7 @@ def certificate_upload_path(instance, filename):
 
 class ClientRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests', null=True, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client_request')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)
@@ -72,7 +72,6 @@ class ClientRequest(BaseRequest):
     company_position = models.CharField(max_length=10)
     company_email = models.EmailField(max_length=50)
     certificate_employment = models.FileField(upload_to=certificate_upload_path, blank=True)
-    is_in_company = models.BooleanField(default=False)
     client_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
