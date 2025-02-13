@@ -1,4 +1,4 @@
-from .models import User
+from .models import *
 from rest_framework import serializers
 
 class AuthSerializer(serializers.ModelSerializer):
@@ -10,5 +10,11 @@ class AuthSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
     
 class CodeAuthSerializr(serializers.Serializer):
-    email = serializers.EmailField(write_only=True)
+    email = serializers.EmailField(required=True)
+    code = serializers.CharField(max_length=6, required=False)
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        field = ['__all__']
 

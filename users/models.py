@@ -1,7 +1,9 @@
 from django.db import models
+
 from common.models.baseModels import BaseModel
 from common.models.choiceModels import ClientPositionChoices
 from common.utils.fileManger import change_filename
+from common.utils.verificationCodeManager import set_expire
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
@@ -30,8 +32,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_agree = models.BooleanField(default=False)
-    is_code_verificated = models.BooleanField(default=True) # 아이디 조회나 비밀번호 변경 요청할 때 인증코드 통과해야 가능하도록
-
+    
     objects = UserManager()
 
     USERNAME_FIELD = 'username'
@@ -59,7 +60,6 @@ class Client(models.Model):
     user_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
-    verification_code = models.CharField(max_length=6, blank=True)
 
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='managers')
@@ -72,3 +72,9 @@ class Manager(models.Model):
 class Notice(BaseModel):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='notices')
     content = models.TextField()
+
+class CodeForAuth(BaseModel):
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
+    expiration_time = models.DateTimeField(default=set_expire)
