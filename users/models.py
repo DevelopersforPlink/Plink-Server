@@ -48,21 +48,21 @@ def certificate_upload_path(instance, filename):
     return f'certificate-employment/{change_filename(filename)}'
 
 class Client(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='clients')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)
     company = models.CharField(max_length=50)
     company_position = models.CharField(max_length=10)
     company_email = models.EmailField(max_length=50)
-    certificate_employment = models.FileField(upload_to=certificate_upload_path)
+    certificate_employment = models.FileField(upload_to=certificate_upload_path, blank=True)
     is_in_company = models.BooleanField(default=False)
-    user_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
+    client_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
 
 class Manager(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='managers')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='manager')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     email = models.EmailField(max_length=50)

@@ -1,6 +1,6 @@
 import uuid
 
-def change_filename(instance, filename):
+def change_filename(filename):
     ext = filename.split('.')[-1]  # 확장자 추출
     new_filename = f"{uuid.uuid4()}.{ext}"
     return new_filename
