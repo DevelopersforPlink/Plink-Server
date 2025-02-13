@@ -1,6 +1,7 @@
 from django.db import models
 
 from common.models.baseModels import BaseModel
+from manages.models import ClientRequest
 from common.models.choiceModels import ClientPositionChoices
 from common.utils.fileManger import change_filename
 from common.utils.verificationCodeManager import set_expire
@@ -48,6 +49,7 @@ def certificate_upload_path(instance, filename):
     return f'certificate-employment/{change_filename(filename)}'
 
 class Client(models.Model):
+    client = models.OneToOneField(ClientRequest, on_delete=models.CASCADE, related_name='client_requests')
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
@@ -60,7 +62,8 @@ class Client(models.Model):
     client_position = models.CharField(choices=ClientPositionChoices.choices, max_length=3)
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
-
+    is_approve = models.BooleanField(default=False)
+    
 class Manager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='manager')
     name = models.CharField(max_length=10)

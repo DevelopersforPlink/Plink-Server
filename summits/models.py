@@ -1,11 +1,12 @@
 from django.db import models
-from common.models.baseModels import BaseModel
 from common.models.choiceModels import BusinessProgressChoices,BusinessTypeChoices
 from users.models import Client
+from manages.models import SummitRequest
 from common.utils.fileManger import change_filename
 
-class Summit(BaseModel):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summits')
+class Summit(models.Model):
+    summit = models.OneToOneField(SummitRequest, on_delete=models.CASCADE, related_name='summit')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summit')
     thumbnail = models.ImageField(upload_to='')
     title = models.CharField(max_length=30)
     start_date = models.DateTimeField()
@@ -25,3 +26,4 @@ class Summit(BaseModel):
     max_video_length = models.DurationField()
     other_requirements = models.TextField(blank=True)
     participant_count = models.PositiveIntegerField(default=0)
+    is_approve = models.BooleanField(default=False)
