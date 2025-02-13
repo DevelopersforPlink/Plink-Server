@@ -16,7 +16,7 @@ class CodeAuthSerializr(serializers.Serializer):
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        exclude = ['is_in_company', 'summit_count', 'pt_count']
+        exclude = ['summit_count', 'pt_count', 'is_approve']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
