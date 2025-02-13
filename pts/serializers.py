@@ -63,8 +63,15 @@ class PTDetailSerializer(serializers.ModelSerializer):
         return obj.get_business_type_display()
     
 class PostedPTSerializer(serializers.ModelSerializer):
+    company = serializers.SerializerMethodField()
+    
     class Meta:
         model = PT
         fields = [
-            "id", "thumbnail", "title", "service_name", "created_at"
+            "id", "thumbnail", "title", "company", "service_name", "created_at"
         ]
+
+    def get_company(self, obj):
+        if obj.client and obj.client.company:
+            return obj.client.company
+        return None
