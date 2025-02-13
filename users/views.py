@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404
+from django.utils.timezone import now
+from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -106,43 +108,51 @@ class VerificationCodeAPIView(APIView):
         serializer = CodeAuthSerializr(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data["email"]
-            # client = get_object_or_404(Client, company_email=email)
             code = create_code()
-            # client.verification_code = code
-            # client.save()
+            if before := CodeForAuth.objects.filter(email=email):
+                before.update(is_used=1)
+            CodeForAuth.objects.create(email=email, code=code)
             subject = "Plink 이메일 인증 보안코드입니다."
-            message = "보안코드는 "+ code + " 입니다."
+            message = "인증코드는 "+ code + " 입니다."
             to = [email]
             EmailMessage(subject=subject, body=message, to=to).send()
             return Response({"message": "send code success"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def patch(self, request): # 보안코드 비교 및 임시토큰 발행
-        email = request.data.get('email')
-        code = request.data.get('code')
+    def patch(self, request): # 인증코드 비교 및 임시토큰 발행
+        serializer = CodeAuthSerializr(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            code = serializer.validated_data.get("code")
         if email == None or code == None:
             return Response({"message": "no email or code"}, status=status.HTTP_400_BAD_REQUEST)
-        client = get_object_or_404(Client, company_email=email)
-        verification_code = client.verification_code
-        client.verification_code = None
-        client.save()
-        if code == verification_code:
-            client.user.is_code_verificated = True
-            access = RefreshToken.for_user(client.user).access_token
-            res = Response(
+        if code_obj := CodeForAuth.objects.filter(email=email, is_used=0).first():
+            if now() >= code_obj.expiration_time:
+                return Response({"message": "Invalid code"})
+            code_obj.is_used = 1
+            code_obj.save()
+            verification_code = code_obj.code
+            if code == verification_code:
+                if client := Client.objects.filter(company_email=email).first():
+                    access = RefreshToken.for_user(client.user).access_token
+                    res = Response(
+                        {
+                            "message": "code is correct",
+                            "temporary_access": access
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                    return res 
+                res = Response({"message": "code is correct"}, status=status.HTTP_200_OK,)
+                return res
+            return Response(
                 {
-                    "message": "code is correct",
-                    "temporary_access": access
-                },
-                status=status.HTTP_200_OK,
-            )
-            return res
-        return Response(
-            {
-                "message": "코드가 맞지 않습니다. 재전송 후 새로운 코드를 입력해주세요."
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
-            )
+                    "message": "코드가 맞지 않습니다. 재전송 후 새로운 코드를 입력해주세요."
+                }, 
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response({"message": "코드를 재전송해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
 class FindIdAPIView(APIView):
     # 아이디 조회
@@ -164,3 +174,13 @@ class ResetPwAPIView(APIView):
         user.set_password(password)
         user.save()
         return Response({"message": "password changed."}, status=status.HTTP_202_ACCEPTED)
+
+class ClientInfoAPIView(APIView):
+    def get(self, request):
+        pass
+
+    def post(self, request):
+        pass
+
+    def patch(self, request):
+        pass
