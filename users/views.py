@@ -18,6 +18,7 @@ from django.contrib.auth import authenticate
 # from django.contrib.auth.models import update_last_login
 
 from .models import *
+from manages.models import ClientRequest
 from .serializers import *
 
 from common.utils.verificationCodeManager import create_code
@@ -190,6 +191,7 @@ class ClientInfoAPIView(APIView):
             client = serializer.save()
             client.user.is_agree = True
             client.user.save()
+            ClientRequest.objects.create(client=client)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -198,5 +200,6 @@ class ClientInfoAPIView(APIView):
         serializer = ClientSerializer(client, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            ClientRequest.objects.create(client=client)
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
