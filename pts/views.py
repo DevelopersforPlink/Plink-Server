@@ -42,7 +42,7 @@ class InvestorMainAPIView(ListAPIView):
                 "message": "투자자만 이 페이지를 볼 수 있습니다."
             })
         
-        if client.user_position != ClientPositionChoices.INVESTOR:
+        if client.client_position != ClientPositionChoices.INVESTOR:
             raise PermissionDenied({
                 "error": "접근 권한이 없습니다.",
                 "message": "투자자만 이 페이지를 볼 수 있습니다."

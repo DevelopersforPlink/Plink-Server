@@ -16,5 +16,10 @@ class CodeAuthSerializr(serializers.Serializer):
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        field = ['__all__']
+        exclude = ['is_in_company', 'summit_count', 'pt_count']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['client_position'] = instance.get_client_position_display()
+        return representation
 
