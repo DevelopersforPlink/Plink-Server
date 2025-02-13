@@ -5,7 +5,7 @@ from manages.models import SummitRequest
 from common.utils.fileManger import change_filename
 
 class Summit(models.Model):
-    summit = models.OneToOneField(SummitRequest, on_delete=models.CASCADE, related_name='summit')
+    summit_request = models.OneToOneField(SummitRequest, on_delete=models.CASCADE, primary_key=True, related_name='summit')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summit')
     thumbnail = models.ImageField(upload_to='')
     title = models.CharField(max_length=30)

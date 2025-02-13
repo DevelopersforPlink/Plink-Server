@@ -49,8 +49,8 @@ def certificate_upload_path(instance, filename):
     return f'certificate-employment/{change_filename(filename)}'
 
 class Client(models.Model):
-    client = models.OneToOneField(ClientRequest, on_delete=models.CASCADE, related_name='client_requests')
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
+    client_request = models.OneToOneField(ClientRequest, on_delete=models.CASCADE, related_name='client')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)

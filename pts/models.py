@@ -5,7 +5,7 @@ from manages.models import PTRequest
 from summits.models import Summit
 
 class PT(models.Model):
-    pt = models.OneToOneField(PTRequest, on_delete=models.CASCADE, related_name='pt')
+    pt_request = models.OneToOneField(PTRequest, on_delete=models.CASCADE, primary_key=True, related_name='pt')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='pt')
     summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pt', null=True, blank=True)
     service_name = models.CharField(max_length=30)
