@@ -177,11 +177,21 @@ class PostedPTPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class PostedPTListAPIView(APIView):
+    def get_paginated_response(self, data):
+        return Response({
+            "page": self.page.number,
+            "page_size": self.page.paginator.per_page,
+            "total_pages": self.page.paginator.num_pages,
+            "total_items": self.page.paginator.count,
+            "presentations": data
+        })
+
+class PostedPTListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PostedPTSerializer
     pagination_class = PostedPTPagination
 
-    def get(self, request):
+    def get_queryset(self):
         user = self.request.user
 
         try:
@@ -191,14 +201,13 @@ class PostedPTListAPIView(APIView):
                 "error": "권한이 없습니다.",
                 "message": "창업가로 등록된 사용자만 접근할 수 있습니다."
             })
+        
+        if client.user_position != ClientPositionChoices.ENTREPRENEUR:
+            raise PermissionDenied({
+                "error": "권한이 없습니다.",
+                "message": "이 페이지는 창업가 전용입니다."
+            })
 
-        posted_pts = PT.objects.filter(client=client).order_by('-created_at')
-
-        paginator = self.pagination_class()
-        paginated_pts = paginator.paginate_queryset(posted_pts, request)
-
-        serializer = PostedPTSerializer(paginated_pts, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
+        return PT.objects.filter(client=client).order_by('-created_at')
 
 
