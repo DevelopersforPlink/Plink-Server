@@ -124,8 +124,11 @@ class PTAPIView(APIView):
     # 프레젠테이션 등록 수정 정보 조회
     def get(self, request, pk):
         presentation = get_object_or_404(PTRequest, pk=pk)
-        return Response(PTCreateSerializer(presentation).data, status=status.HTTP_200_OK)
-    
+        has_previous_version = PT.objects.filter(pt_request=presentation).exists()
+        return Response({
+            "presentation": PTCreateSerializer(presentation).data,
+            "has_previous_version": has_previous_version
+        }, status=status.HTTP_200_OK)
     # 프레젠테이션 수정
     def patch(self, request, pk):
         presentation = get_object_or_404(PTRequest, pk=pk)
