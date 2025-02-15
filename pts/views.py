@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied, NotFound
-from common.models.choiceModels import ClientPositionChoices
+from common.models.choiceModels import ClientPositionChoices, RequestStatus
 from manages.models import PTRequest
 from .models import *
 from .serializers import *
@@ -36,7 +36,7 @@ class InvestorMainAPIView(ListAPIView):
         user = self.request.user
 
         try:
-            client = user.clients
+            client = user.client
         except Client.DoesNotExist:
             raise PermissionDenied({
                 "error": "접근 권한이 없습니다.",
@@ -100,7 +100,7 @@ class PTCreateAPIView(APIView):
         user = self.request.user
 
         try:
-            client = user.clients
+            client = user.client
         except Client.DoesNotExist:
             return Response({
                 "error": "권한이 없습니다.",
@@ -113,27 +113,24 @@ class PTCreateAPIView(APIView):
         
         presentation = serializer.save(client=client)
 
-        # 백오피스 프레젠테이션 등록 요청 송신
-        PTRequest.objects.create(pt=presentation)
-
         return Response({
             "message": "프레젠테이션 등록이 요청되었어요.",
             "presentation": PTCreateSerializer(presentation).data
         }, status=status.HTTP_201_CREATED)
     
 class PTAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEntrepreneur]
 
     # 프레젠테이션 등록 수정 정보 조회
     def get(self, request, pk):
-        presentation = get_object_or_404(PT, pk=pk)
+        presentation = get_object_or_404(PTRequest, pk=pk)
         return Response(PTCreateSerializer(presentation).data, status=status.HTTP_200_OK)
     
     # 프레젠테이션 수정
     def patch(self, request, pk):
-        presentation = get_object_or_404(PT, pk=pk)
+        presentation = get_object_or_404(PTRequest, pk=pk)
 
-        if request.user.clients != presentation.client:
+        if request.user.client != presentation.client:
             raise PermissionDenied({
                 "error": "권한이 없습니다.",
                 "message": "본인의 프레젠테이션만 수정할 수 있습니다."
@@ -142,9 +139,6 @@ class PTAPIView(APIView):
         serializer = PTCreateSerializer(presentation, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            
-            # 백오피스 프레젠테이션 등록 요청 송신
-            PTRequest.objects.create(pt=presentation)
 
             return Response({
                 "message": "프레젠테이션 수정이 요청되었어요.",
@@ -154,17 +148,31 @@ class PTAPIView(APIView):
     
     # 등록한 프레젠테이션 삭제
     def delete(self, request, pk):
-        presentation = get_object_or_404(PT, pk=pk)
+        client = request.user.client
+        presentation = PT.objects.filter(pk=pk, client=client).first()
+        pt_request = PTRequest.objects.filter(pt=presentation).first()
 
-        if request.user.clients != presentation.client:
+        if presentation and presentation.client != client:
             raise PermissionDenied({
                 "error": "권한이 없습니다.",
                 "message": "본인의 프레젠테이션만 삭제할 수 있습니다."
             })
-        
-        presentation.delete()
-        return Response({"message": "등록한 프레젠테이션이 삭제되었어요."}, status=status.HTTP_200_OK)
+        if presentation and pt_request:
+            pt_request.delete()
+            presentation.delete()
+            return Response({"message": "등록한 프레젠테이션이 삭제되었어요."}, status=status.HTTP_200_OK)
+        if pt_request:
+            status_message = ""
+            if pt_request.status == RequestStatus.PENDING:
+                status_message = "승인 대기 중이던 프레젠테이션이 삭제되었어요."
+            elif pt_request.status == RequestStatus.REJECTED:
+                status_message = "반려된 프레젠테이션이 삭제되었어요."
 
+            pt_request.delete()
+            return Response({
+                "message": status_message
+            }, status=status.HTTP_200_OK)
+        
 class PTDetailAPIView(APIView):
     permission_classes =[IsAuthenticated]
 
@@ -196,7 +204,7 @@ class PostedPTListAPIView(ListAPIView):
         user = self.request.user
 
         try:
-            client = user.clients
+            client = user.client
         except Client.DoesNotExist:
             raise PermissionDenied({
                 "error": "권한이 없습니다.",

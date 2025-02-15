@@ -28,7 +28,7 @@ class PTSerializer(serializers.ModelSerializer):
 
 class PTCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PT
+        model = PTRequest
         fields = [
             "thumbnail", "service_name", "title",
             "link", "total_link", "business_type", "summary",
