@@ -20,7 +20,7 @@ from django.contrib.auth import authenticate
 from .models import *
 from manages.models import ClientRequest
 from .serializers import *
-from manages.serializers import ClientRequestSerializer
+from manages.serializers import ClientRequestSerializer, ClientRequestResSerializer
 
 from common.utils.verificationCodeManager import create_code
 
@@ -179,12 +179,12 @@ class ResetPwAPIView(APIView):
 
 class ClientInfoAPIView(APIView):
     def get(self, request):
-        client = getattr(request.user, 'client', None)
-        serializer = ClientSerializer(client)
+        client = request.user.client
+        serializer = ClientResSerializer(client)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def post(self, request):
-        data = request.data
+        data = request.data.copy()
         user = request.user
         data['user'] = user.id
         serializer = ClientSerializer(data=data)
@@ -193,11 +193,11 @@ class ClientInfoAPIView(APIView):
             client.user.is_agree = True
             client.user.save()
             data.pop('user')
-            data['client'] = client.id
+            data['client'] = client.user_id
             serializer_request = ClientRequestSerializer(data=data)
-            if serializer.is_valid():
+            if serializer_request.is_valid():
                 serializer_request.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response({"message": "등록에 성공했습니다."}, status=status.HTTP_201_CREATED)
             return Response(serializer_request.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -217,11 +217,11 @@ class ClientInfoAPIView(APIView):
 
 class ClientUpdateInfoAPIView(APIView):
     def get(self, request):
-        if request.user.is_approve:
+        if request.user.client.is_approve:
             client = request.user.client
-            serializer = ClientSerializer(client)
+            serializer = ClientResSerializer(client)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            client_request = request.user.client_request
-            serializer = ClientRequestSerializer(client_request)
+            client_request = request.user.client.client_request
+            serializer = ClientRequestResSerializer(client_request)
             return Response(serializer.data, status=status.HTTP_200_OK)
