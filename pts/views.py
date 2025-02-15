@@ -141,7 +141,11 @@ class PTAPIView(APIView):
         
         serializer = PTCreateSerializer(presentation, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(is_approve=False)
+
+            if hasattr(presentation, 'pt') and presentation.pt:
+                presentation.pt.is_approve = False
+                presentation.pt.save()
 
             return Response({
                 "message": "프레젠테이션 수정이 요청되었어요.",
