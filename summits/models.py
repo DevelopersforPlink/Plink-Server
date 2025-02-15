@@ -27,6 +27,8 @@ class Summit(models.Model):
     other_requirements = models.TextField(blank=True)
     participant_count = models.PositiveIntegerField(default=0)
     is_approve = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def get_summit_request_model():
         return apps.get_model('manages', 'SummitRequest')
