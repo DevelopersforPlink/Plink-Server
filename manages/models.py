@@ -8,8 +8,8 @@ from summits.models import Summit
 
 class PTRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='pt_requests', null=True, blank=True)
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='pts')
-    summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pts', null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='pt_requests')
+    summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pt_requests', null=True, blank=True)
     service_name = models.CharField(max_length=30)
     title = models.CharField(max_length=30)
     thumbnail = models.ImageField(upload_to='')
@@ -64,7 +64,7 @@ def certificate_upload_path(instance, filename):
 
 class ClientRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests', null=True, blank=True)
-    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client_request')
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client_requests')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)
