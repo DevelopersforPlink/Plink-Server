@@ -22,4 +22,8 @@ class ClientSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['client_position'] = instance.get_client_position_display()
         return representation
-
+    
+class ClientResSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = '__all__'
