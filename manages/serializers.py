@@ -66,10 +66,50 @@ class UserVerificationDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id", "request_id", "client_position", "name", "phone", "company",
             "certificate_employment", "certificate_employment_name", "company_position",
-            "company_email", "requested_at", "status",
+            "company_email", "requested_at",
         ]
 
     def get_certificate_employment_name(self, obj):
         if obj.certificate_employment:
             return obj.certificate_employment.name.split("/")[-1]
         return None
+    
+class PTVerificationDetailSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+    upload_location = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PTRequest
+        fields = [
+            "id", "request_id", "requested_at", "client_position",
+            "name", "phone", "company", "company_position",
+            "company_email", "business_type", "business_progress",
+            "summary", "upload_location", "link", "total_link", "file",
+        ]
+
+
+    def get_file(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+
+        file_type = request.query_params.get("file", None)
+
+        file_mapping = {
+            "one_minute_presentation": obj.link,
+            "total_presentation": obj.total_link,
+            "summary_business_plan": obj.summary_business_plan.url if obj.summary_business_plan else None,
+            "business_plan": obj.business_plan.url if obj.business_plan else None,
+            "pitch_deck": obj.pitch_deck.url if obj.pitch_deck else None,
+            "traction_data": obj.traction_data.url if obj.traction_data else None,
+        }
+
+        if file_type and file_type in file_mapping and file_mapping[file_type]:
+            return {file_type : file_mapping[file_type]}
+        return None
+    
+    def get_upload_location(self, obj):
+        if obj.is_summit:
+            summit_title = obj.summit.title if obj.summit else "써밋 정보 없음"
+            return f"써밋: {summit_title}"
+        return "전체 프레젠테이션"
