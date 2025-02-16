@@ -13,6 +13,7 @@ from itertools import chain
 from .models import *
 from .serializers import *
 from users.permissions import IsApprovedUser, IsEntrepreneur, IsInvestor
+from common.utils.requestIDGenerator import generate_request_id
 
 class InvestorMainPagination(PageNumberPagination):
     page_size = 12
@@ -194,8 +195,12 @@ class PTAPIView(APIView):
         
         serializer = PTCreateSerializer(presentation, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save(is_approve=False)
-
+            pt_request = serializer.save()
+            pt_request.request_id = generate_request_id(pt_request.get_request_type())
+            pt_request.is_approve = False
+            pt_request.status = RequestStatus.PENDING
+            pt_request.save()
+            
             if hasattr(presentation, 'pt') and presentation.pt:
                 presentation.pt.is_approve = False
                 presentation.pt.save()

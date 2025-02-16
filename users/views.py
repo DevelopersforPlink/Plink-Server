@@ -18,11 +18,13 @@ from django.contrib.auth import authenticate
 # from django.contrib.auth.models import update_last_login
 
 from .models import *
-from manages.models import ClientRequest
+from manages.models import PTRequest
 from .serializers import *
 from manages.serializers import ClientRequestSerializer, ClientRequestResSerializer
 
 from common.utils.verificationCodeManager import create_code
+from common.utils.requestIDGenerator import generate_request_id
+from common.models.choiceModels import RequestStatus
 
 
 class RefreshAPIView(APIView):
@@ -207,7 +209,9 @@ class ClientInfoAPIView(APIView):
         serializer = ClientRequestSerializer(client_request, data=data, partial=True)
         if serializer.is_valid():
             client_request = serializer.save()
+            client_request.request_id = generate_request_id(client_request.get_request_type())
             client_request.is_approve = False
+            client_request.status = RequestStatus.PENDING
             client_request.save()
             if client := client_request.client:
                 client.is_approve = False
