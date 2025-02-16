@@ -31,6 +31,9 @@ class PTRequest(BaseRequest):
     is_summit = models.BooleanField(default=False)
     is_approve = models.BooleanField(default=False)
 
+    def get_request_type(self) -> str:
+        return "PSR"
+
 class SummitRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='summit_requests', null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summits_requests')
@@ -55,6 +58,9 @@ class SummitRequest(BaseRequest):
     participant_count = models.PositiveIntegerField(default=0)
     is_approve = models.BooleanField(default=False)
 
+    def get_request_type(self) -> str:
+        return "SSR"
+    
 def profile_upload_path(instance, filename):
     return f'profile/{change_filename(filename)}'
 
@@ -76,3 +82,6 @@ class ClientRequest(BaseRequest):
     summit_count = models.IntegerField(default=0)
     pt_count = models.IntegerField(default=0)
     is_approve = models.BooleanField(default=False)    
+    
+    def get_request_type(self) -> str:
+        return "UVR"    
