@@ -4,9 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from manages.models import PTRequest
 from .models import *
+from common.models.choiceModels import RequestStatus
 from .serializers import *
 from users.permissions import IsApprovedUser, IsEntrepreneur, IsInvestor
 
@@ -26,7 +27,7 @@ class VerificationPagination(PageNumberPagination):
         })
 
 class VerificationAPIView(ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     pagination_class = VerificationPagination
 
     def get_queryset(self):
@@ -66,4 +67,69 @@ class VerificationAPIView(ListAPIView):
         })
     
 class UserVerificationDetailAPIView(APIView):
-    pass
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, pk):
+        client_request = get_object_or_404(ClientRequest, id=pk)
+
+        serializer = UserVerificationDetailSerializer(client_request)
+
+        return Response({
+            "message": "회원 검증 요청 상세 페이지 조회 성공",
+            "request": serializer.data
+        }, status=status.HTTP_200_OK)
+                
+    def post(self, request, pk):
+        client_request = get_object_or_404(ClientRequest, id=pk)
+        client = client_request.client
+
+        new_status = request.data.get("status")
+        reject_reason = request.data.get("reject_reason")
+        manager_id = request.data.get("manager")
+
+        manager = get_object_or_404(Manager, id=manager_id)
+
+        if client_request.is_approve:
+            return Response({"message": "이미 승인된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if new_status not in [RequestStatus.APPROVED, RequestStatus.REJECTED]:
+            return Response({"message": "유효하지 않은 status 값입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_status == RequestStatus.REJECTED and not reject_reason:
+            return Response({"message": "반려 사유(reject_reason)를 작성해야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        client_request.status = new_status
+        client_request.is_approve = (new_status == RequestStatus.APPROVED)
+        client_request.manager = manager
+
+        if new_status == RequestStatus.REJECTED:
+            client_request.reject_reason = reject_reason
+        
+        client_request.save()
+
+        if new_status == RequestStatus.APPROVED:
+            client.name = client_request.name
+            client.phone = client_request.phone
+            client.image = client_request.image
+            client.company = client_request.company
+            client.company_position = client_request.company_position
+            client.company_email = client_request.company_email
+            client.certificate_employment = client_request.certificate_employment
+            client.client_position = client_request.client_position
+            client.summit_count = client_request.summit_count
+            client.pt_count = client_request.pt_count
+            client.is_approve = True
+            client.save()
+            message = "회원 검증 요청 승인 처리 완료"
+        else:
+            client.is_approve = False
+            client.save()
+            message = "회원 검증 요청 반려 처리 완료"
+
+        return Response({
+            "message": message,
+            "request_id": client_request.request_id,
+            "reject_reason": client_request.reject_reason,
+            "status": client_request.status,
+            "manager": manager.name
+        }, status=status.HTTP_200_OK)

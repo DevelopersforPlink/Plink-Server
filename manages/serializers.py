@@ -58,3 +58,18 @@ class PTVerificationRequestSerializer(serializers.ModelSerializer):
 class SummitVerificationRequestSerializer(serializers.ModelSerializer):
     pass
 
+class UserVerificationDetailSerializer(serializers.ModelSerializer):
+    certificate_employment_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClientRequest
+        fields = [
+            "id", "request_id", "client_position", "name", "phone", "company",
+            "certificate_employment", "certificate_employment_name",
+            "company_email", "requested_at", "status",
+        ]
+
+    def get_certificate_employment_name(self, obj):
+        if obj.certificate_employment:
+            return obj.certificate_employment.name.split("/")[-1]
+        return None
