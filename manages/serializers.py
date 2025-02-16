@@ -17,7 +17,6 @@ class ClientVerificationRequestSerializer(serializers.ModelSerializer):
         ]
 
     def get_certificate_employment_name(self, obj):
-        """ 파일명만 추출하여 반환 """
         if obj.certificate_employment:
             return obj.certificate_employment.name.split("/")[-1]  
         return None
