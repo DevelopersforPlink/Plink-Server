@@ -70,7 +70,7 @@ def certificate_upload_path(instance, filename):
 
 class ClientRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests', null=True, blank=True)
-    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client_requests')
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client_request')
     name = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     image = models.ImageField(upload_to=profile_upload_path, blank=True)

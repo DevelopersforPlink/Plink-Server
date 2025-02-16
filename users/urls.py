@@ -13,4 +13,5 @@ urlpatterns = [
     path('id/', FindIdAPIView().as_view()),
     path('password/', ResetPwAPIView.as_view()),
     path('client-info/', ClientInfoAPIView.as_view()),
+    path('client-info/update/', ClientUpdateInfoAPIView.as_view()),
 ]
