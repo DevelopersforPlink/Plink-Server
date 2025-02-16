@@ -65,7 +65,7 @@ class UserVerificationDetailSerializer(serializers.ModelSerializer):
         model = ClientRequest
         fields = [
             "id", "request_id", "client_position", "name", "phone", "company",
-            "certificate_employment", "certificate_employment_name",
+            "certificate_employment", "certificate_employment_name", "company_position",
             "company_email", "requested_at", "status",
         ]
 
