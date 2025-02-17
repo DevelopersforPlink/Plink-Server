@@ -2,7 +2,7 @@ from django.db import models
 
 from common.models.baseModels import BaseModel
 from common.models.choiceModels import ClientPositionChoices
-from common.utils.fileManger import change_filename
+from common.utils.fileManger import *
 from common.utils.verificationCodeManager import set_expire
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -40,12 +40,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
-
-def profile_upload_path(instance, filename):
-    return f'profile/{change_filename(filename)}'
-
-def certificate_upload_path(instance, filename):
-    return f'certificate-employment/{change_filename(filename)}'
 
 class Client(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='client')
