@@ -181,7 +181,9 @@ class ClientInfoAPIView(APIView):
     def get(self, request):
         client = request.user.client
         serializer = ClientResSerializer(client)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        res = serializer.data
+        res['status'] = client.client_request.status
+        return Response(res, status=status.HTTP_200_OK)
         
     def post(self, request):
         data = request.data.copy()
@@ -208,6 +210,7 @@ class ClientInfoAPIView(APIView):
         if serializer.is_valid():
             client_request = serializer.save()
             client_request.is_approve = False
+            client_request.status = '-'
             client_request.save()
             if client := client_request.client:
                 client.is_approve = False
@@ -217,11 +220,6 @@ class ClientInfoAPIView(APIView):
 
 class ClientUpdateInfoAPIView(APIView):
     def get(self, request):
-        if request.user.client.is_approve:
-            client = request.user.client
-            serializer = ClientResSerializer(client)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            client_request = request.user.client.client_request
-            serializer = ClientRequestResSerializer(client_request)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        client_request = request.user.client.client_request
+        serializer = ClientRequestResSerializer(client_request)
+        return Response(serializer.data, status=status.HTTP_200_OK)
