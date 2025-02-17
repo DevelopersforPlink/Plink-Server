@@ -2,7 +2,7 @@ from django.db import models
 from common.models.baseModels import BaseRequest
 from common.models.choiceModels import ClientPositionChoices
 from users.models import Client, Manager, User
-from common.utils.fileManger import *
+from common.utils.fileManager import *
 from common.models.choiceModels import BusinessProgressChoices, BusinessTypeChoices
 from summits.models import Summit
 
