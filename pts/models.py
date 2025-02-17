@@ -3,6 +3,7 @@ from common.models.choiceModels import BusinessProgressChoices, BusinessTypeChoi
 from users.models import Client
 from manages.models import PTRequest
 from summits.models import Summit
+from common.models.choiceModels import RequestStatus
 
 class PT(models.Model):
     pt_request = models.OneToOneField(PTRequest, on_delete=models.CASCADE, primary_key=True, related_name='pt')
@@ -30,3 +31,8 @@ class PT(models.Model):
     is_approve = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(
+        max_length=10,
+        choices=RequestStatus.choices,
+        default=RequestStatus.PENDING
+    )

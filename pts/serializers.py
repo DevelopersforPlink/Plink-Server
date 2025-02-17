@@ -5,12 +5,13 @@ class PTSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="pt_request.id", read_only=True)
     profile = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = PT
         fields = [
             "id", "thumbnail", "profile", "title", "company","service_name",
-            "business_type", "business_progress", "is_approve", "created_at"
+            "business_type", "business_progress", "is_approve", "type", "created_at"
         ]
 
     def get_profile(self, obj):
@@ -23,6 +24,11 @@ class PTSerializer(serializers.ModelSerializer):
             return obj.client.company
         return None
 
+    def get_type(self,obj):
+        if not obj.is_approve and obj.status == RequestStatus.APPROVED:
+            return "수정 중"
+        return None
+    
 class PTCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = PTRequest
@@ -37,12 +43,13 @@ class PTDetailSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="pt_request.id", read_only=True)
     profile = serializers.SerializerMethodField()
     company = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = PT
         fields = [
             "id", "thumbnail", "profile", "title", "link", "summary","is_approve",
-            "summary_business_plan", "company", "service_name", "business_type"
+            "summary_business_plan", "company", "service_name","type","business_type"
             ]
 
     def get_profile(self, obj):
@@ -54,7 +61,18 @@ class PTDetailSerializer(serializers.ModelSerializer):
         if obj.client and obj.client.company:
             return obj.client.company
         return None
-    
+    def get_type(self, obj):
+        if obj.is_approve:
+            return "승인됨"
+        # 최초 등록 반려 or 수정 요청 반려 모두 포함
+        if obj.reject_reason and not obj.is_approve and obj.status == RequestStatus.PENDING:
+            return "반려됨"
+        if not obj.is_approve and obj.status == RequestStatus.PENDING:
+            return "심사 중"
+        if not obj.is_approve and obj.status == RequestStatus.APPROVED:
+            return "수정 중"
+        return None
+
 class PostedPTSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="pt_request.id", read_only=True)
     company = serializers.SerializerMethodField()
@@ -74,11 +92,13 @@ class PostedPTSerializer(serializers.ModelSerializer):
     def get_type(self, obj):
         if isinstance(obj, PTRequest):
             pt = getattr(obj, "pt", None)  # PT가 존재하는지 확인
+            if obj.reject_reason and not obj.is_approve and obj.status == RequestStatus.PENDING:
+                return "반려됨"
             if not pt and not obj.is_approve:
-                return "심사중"  # PT가 없고 PTRequest의 is_approve=False
-            elif pt and not pt.is_approve and not obj.is_approve:
-                return "수정중"
-            return None # 기본값: 승인된 경우
+                return "심사 중"  # PT가 없고 PTRequest의 is_approve=False
+            if pt and not pt.is_approve and not obj.is_approve:
+                return "수정 중"
+        return None # 기본값: 승인된 경우
         
     def get_pt_request_id(self, obj):
         if isinstance(obj, PTRequest):
