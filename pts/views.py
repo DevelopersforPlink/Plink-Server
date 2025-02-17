@@ -10,6 +10,7 @@ from rest_framework.exceptions import PermissionDenied, NotFound
 from common.models.choiceModels import ClientPositionChoices, RequestStatus, BusinessProgressChoices, BusinessTypeChoices
 from manages.models import PTRequest
 from itertools import chain
+from django.db.models import Q
 from .models import *
 from .serializers import *
 from users.permissions import IsApprovedUser, IsEntrepreneur, IsInvestor
@@ -72,7 +73,9 @@ class InvestorMainAPIView(ListAPIView):
                 "message": f"Valid progress status: {valid_progress_status}"
             })
         
-        queryset = PT.objects.all().order_by('-created_at')
+        queryset = PT.objects.filter(
+            Q(is_approve=True, status="Y") | Q(is_approve=False, status="Y")
+        ).order_by('-created_at')
 
         if category != "전체":
             queryset = queryset.filter(business_type=category)
@@ -203,6 +206,7 @@ class PTAPIView(APIView):
             
             if hasattr(presentation, 'pt') and presentation.pt:
                 presentation.pt.is_approve = False
+                presentation.pt.save(update_fields=["is_approve"])
                 presentation.pt.save()
 
             return Response({
@@ -243,6 +247,21 @@ class PTDetailAPIView(APIView):
 
     def get(self, request, pk):
         presentation = get_object_or_404(PT, pk=pk)
+        client = request.user.client
+        user_position = client.client_position
+
+        if user_position == ClientPositionChoices.INVESTOR:
+            if not (presentation.is_approve or (not presentation.is_approve and presentation.status == RequestStatus.APPROVED)):
+                raise PermissionDenied({
+                    "error": "접근할 수 없습니다.",
+                    "message": "수정 중이거나 승인된 프레젠테이션만 조회할 수 있습니다."
+                })
+        if user_position == ClientPositionChoices.ENTREPRENEUR:
+            if not presentation.is_approve and not presentation.pt_request:
+                raise PermissionDenied({
+                    "error": "접근할 수 없습니다.",
+                    "message": "본인의 프레젠테이션만 조회할 수 있습니다."
+                })
         serializer = PTDetailSerializer(presentation)
         return Response(serializer.data, status=status.HTTP_200_OK)
     

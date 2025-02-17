@@ -36,25 +36,27 @@ class VerificationAPIView(ListAPIView):
         category = self.request.query_params.get("category", None)
 
         category_mapping = {
-            "회원 승인 요청": ClientRequest.objects.all().annotate(
-            priority=Case(
-                When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
-                default=Value(2),  # 그 외는 2
-                output_field=IntegerField(),
-            )
-        ).order_by("priority", "-updated_at"),
-            "프레젠테이션 승인 요청": PTRequest.objects.all().order_by("updated_at").annotate(
-            priority=Case(
-                When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
-                default=Value(2),  # 그 외는 2
-                output_field=IntegerField(),
-            )
-        ).order_by("priority", "-updated_at"),
+            "회원 승인 요청": ClientRequest.objects.annotate(
+                priority=Case(
+                    When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
+                    default=Value(2),  # 그 외는 2
+                    output_field=IntegerField(),
+                )
+            ).order_by("priority", "-updated_at"),
+
+            "프레젠테이션 승인 요청": PTRequest.objects.annotate(
+                priority=Case(
+                    When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
+                    default=Value(2),  # 그 외는 2
+                    output_field=IntegerField(),
+                )
+            ).order_by("priority", "-updated_at"),
+
             # "써밋 승인 요청": SummitRequest.objects.all(),
         }
 
         return category_mapping.get(category, ClientRequest.objects.none())
-    
+
     def get_serializer_class(self):
         category = self.request.query_params.get("category", None)
 
@@ -142,6 +144,7 @@ class UserVerificationDetailAPIView(APIView):
             "request_id": client_request.request_id,
             "reject_reason": client_request.reject_reason,
             "status": client_request.status,
+            "is_approve": client_request.is_approve,
             "manager": manager.name
         }, status=status.HTTP_200_OK)
     
@@ -185,6 +188,7 @@ class PTVerificationDetailAPIView(APIView):
         if new_status == RequestStatus.APPROVED:
             if pt:
                 pt.is_approve = True
+                pt.status = RequestStatus.APPROVED
                 pt.save()
             else:
                 PT.objects.create(
@@ -205,12 +209,14 @@ class PTVerificationDetailAPIView(APIView):
                     business_progress=pt_request.business_progress,
                     is_summit=pt_request.is_summit,
                     is_approve=True,
+                    status = RequestStatus.APPROVED,
                     created_at = pt_request.created_at
                 )
             message = "프레젠테이션 승인 처리 완료"
         else:
             if pt:  # 반려된 경우 PT 테이블도 is_approve=False 처리
                 pt.is_approve = False
+                pt.status = RequestStatus.REJECTED
                 pt.save()
             message = "프레젠테이션 반려 처리 완료"
 
@@ -219,5 +225,6 @@ class PTVerificationDetailAPIView(APIView):
             "request_id": pt_request.request_id,
             "reject_reason": pt_request.reject_reason,
             "status": pt_request.status,
+            "is_approve": pt_request.is_approve,
             "manager": manager.name
         }, status=status.HTTP_200_OK)
