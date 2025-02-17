@@ -6,6 +6,11 @@ class ClientRequestSerializer(serializers.ModelSerializer):
         model = ClientRequest
         exclude = ['manager', 'summit_count', 'pt_count', 'is_approve']
 
+class ClientRequestResSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientRequest
+        exclude = ['manager']
+
 class ClientVerificationRequestSerializer(serializers.ModelSerializer):
     certificate_employment_name = serializers.SerializerMethodField() 
 
