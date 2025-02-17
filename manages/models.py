@@ -2,7 +2,7 @@ from django.db import models
 from common.models.baseModels import BaseRequest
 from common.models.choiceModels import ClientPositionChoices
 from users.models import Client, Manager, User
-from common.utils.fileManger import change_filename
+from common.utils.fileManger import *
 from common.models.choiceModels import BusinessProgressChoices, BusinessTypeChoices
 from summits.models import Summit
 
@@ -12,14 +12,14 @@ class PTRequest(BaseRequest):
     summit = models.ForeignKey(Summit, on_delete=models.CASCADE, related_name='pt_requests', null=True, blank=True)
     service_name = models.CharField(max_length=30)
     title = models.CharField(max_length=30)
-    thumbnail = models.ImageField(upload_to='')
+    thumbnail = models.ImageField(upload_to=thumbnail_upload_path)
     link = models.TextField()
     total_link = models.TextField()
     summary = models.TextField()
-    summary_business_plan  = models.FileField(upload_to='')
-    business_plan = models.FileField(upload_to='')
-    pitch_deck = models.FileField(upload_to='')
-    traction_data = models.FileField(upload_to='')
+    summary_business_plan  = models.FileField(upload_to=summary_business_plan_upload_path)
+    business_plan = models.FileField(upload_to=business_plan_upload_path)
+    pitch_deck = models.FileField(upload_to=pitch_deck_upload_path)
+    traction_data = models.FileField(upload_to=traction_data_upload_path)
     business_type = models.CharField(
         max_length=20,
         choices=BusinessTypeChoices.choices,
@@ -37,7 +37,7 @@ class PTRequest(BaseRequest):
 class SummitRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='summit_requests', null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='summits_requests')
-    thumbnail = models.ImageField(upload_to='')
+    thumbnail = models.ImageField(upload_to=thumbnail_upload_path)
     title = models.CharField(max_length=30)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
@@ -60,13 +60,6 @@ class SummitRequest(BaseRequest):
 
     def get_request_type(self) -> str:
         return "SSR"
-    
-def profile_upload_path(instance, filename):
-    return f'profile/{change_filename(filename)}'
-
-def certificate_upload_path(instance, filename):
-    return f'certificate-employment/{change_filename(filename)}'
-
 
 class ClientRequest(BaseRequest):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='client_requests', null=True, blank=True)
