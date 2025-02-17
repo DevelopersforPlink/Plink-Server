@@ -2,7 +2,7 @@ from django.db import models
 from common.models.choiceModels import BusinessProgressChoices,BusinessTypeChoices
 from users.models import Client
 from django.apps import apps
-from common.utils.fileManger import thumbnail_upload_path
+from common.utils.fileManager import thumbnail_upload_path
 
 class Summit(models.Model):
     summit_request = models.OneToOneField('manages.SummitRequest', on_delete=models.CASCADE, primary_key=True, related_name='summit')

@@ -2,7 +2,7 @@ from django.db import models
 
 from common.models.baseModels import BaseModel
 from common.models.choiceModels import ClientPositionChoices
-from common.utils.fileManger import *
+from common.utils.fileManager import *
 from common.utils.verificationCodeManager import set_expire
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin

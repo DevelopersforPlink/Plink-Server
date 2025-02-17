@@ -2,7 +2,7 @@ from django.db import models
 from common.models.choiceModels import BusinessProgressChoices, BusinessTypeChoices
 from users.models import Client
 from manages.models import PTRequest
-from common.utils.fileManger import *
+from common.utils.fileManager import *
 from summits.models import Summit
 from common.models.choiceModels import RequestStatus
 
