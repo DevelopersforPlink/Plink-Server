@@ -132,10 +132,12 @@ class UserVerificationDetailAPIView(APIView):
             client.summit_count = client_request.summit_count
             client.pt_count = client_request.pt_count
             client.is_approve = True
+            client.status = RequestStatus.APPROVED
             client.save()
             message = "회원 검증 요청 승인 처리 완료"
         else:
             client.is_approve = False
+            client.status = RequestStatus.REJECTED
             client.save()
             message = "회원 검증 요청 반려 처리 완료"
 
