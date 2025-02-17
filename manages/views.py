@@ -11,6 +11,7 @@ from pts.models import PT
 from common.models.choiceModels import RequestStatus
 from .serializers import *
 from users.permissions import IsApprovedUser, IsEntrepreneur, IsInvestor
+from django.db.models import Case, When, Value, IntegerField
 
 class VerificationPagination(PageNumberPagination):
     page_size = 20  # 기본 페이지 크기
@@ -35,8 +36,20 @@ class VerificationAPIView(ListAPIView):
         category = self.request.query_params.get("category", None)
 
         category_mapping = {
-            "회원 승인 요청": ClientRequest.objects.all(),
-            "프레젠테이션 승인 요청": PTRequest.objects.all(),
+            "회원 승인 요청": ClientRequest.objects.all().annotate(
+            priority=Case(
+                When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
+                default=Value(2),  # 그 외는 2
+                output_field=IntegerField(),
+            )
+        ).order_by("priority", "-updated_at"),
+            "프레젠테이션 승인 요청": PTRequest.objects.all().order_by("updated_at").annotate(
+            priority=Case(
+                When(status=RequestStatus.PENDING, then=Value(1)),  # PENDING이면 우선순위 1
+                default=Value(2),  # 그 외는 2
+                output_field=IntegerField(),
+            )
+        ).order_by("priority", "-updated_at"),
             # "써밋 승인 요청": SummitRequest.objects.all(),
         }
 
@@ -89,9 +102,6 @@ class UserVerificationDetailAPIView(APIView):
         manager_id = request.data.get("manager")
 
         manager = get_object_or_404(Manager, id=manager_id)
-
-        if client_request.is_approve:
-            return Response({"message": "이미 승인된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
         
         if new_status not in [RequestStatus.APPROVED, RequestStatus.REJECTED]:
             return Response({"message": "유효하지 않은 status 값입니다."}, status=status.HTTP_400_BAD_REQUEST)
@@ -155,10 +165,7 @@ class PTVerificationDetailAPIView(APIView):
         reject_reason = request.data.get("reject_reason")
         manager_id = request.data.get("manager")
 
-        manager = get_object_or_404(Manager, id=manager_id)
-
-        if pt_request.is_approve:
-            return Response({"message": "이미 승인된 요청입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        manager = get_object_or_404(Manager, user_id=manager_id)
 
         if new_status not in [RequestStatus.APPROVED, RequestStatus.REJECTED]:
             return Response({"message": "유효하지 않은 status 값입니다."}, status=status.HTTP_400_BAD_REQUEST)
